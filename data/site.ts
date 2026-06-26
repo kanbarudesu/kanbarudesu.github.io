@@ -34,7 +34,7 @@ export const site: SiteConfig = {
   meta: {
     title: 'Yogie Sukandi Wijaya | Game Programmer',
     description: 'Game Programmer specializing in Unity C# and editor tool development. Explore the games, prototypes, and Unity editor tools I have created.',
-    ogImage : '/og-cover.png'
+    ogImage : '/Images/og-cover.png'
   },
   hero: {
     name: 'Yogie Sukandi Wijaya',
