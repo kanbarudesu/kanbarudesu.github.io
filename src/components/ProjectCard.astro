@@ -1,0 +1,198 @@
+---
+import { type CollectionEntry, render } from "astro:content";
+import { Image, getImage } from "astro:assets";
+import { Icon } from "astro-icon/components";
+
+interface Props {
+  project: CollectionEntry<"projects">;
+  index: number;
+}
+
+const { project, index } = Astro.props;
+const { Content } = await render(project);
+const data = project.data;
+const allAssets = import.meta.glob<{ default: any }>(
+  "/src/assets/projects/**/*.{jpeg,jpg,png,gif,webp,svg,mp4}",
+  { eager: true },
+);
+const assetPaths = Object.keys(allAssets);
+const resolveAssetPath = (filename: string) => {
+  if (!filename) return "";
+  const match = assetPaths.find((path) => path.endsWith(`/${filename}`));
+  return match || "";
+};
+const projectFolder = `/src/assets/projects/${data.assetsDir}/`;
+const projectAssets = Object.keys(allAssets)
+  .filter((path) => path.startsWith(projectFolder))
+  .sort((a, b) => {
+    const getNum = (path: string) => {
+      const filename = path.split("/").pop() || "";
+      const match = filename.match(/^(\d+)/);
+      return match ? parseInt(match[1]) : 999;
+    };
+    return getNum(a) - getNum(b);
+  });
+
+const thumbPath =
+  projectAssets.find((path) => path.endsWith(`/${data.thumbnail}`)) ||
+  `/src/assets/projects/thumbnail/${data.thumbnail}` ||
+  "";
+
+const optimizedCarousel = await Promise.all(
+  projectAssets.map(async (path) => {
+    if (path.endsWith(".mp4")) {
+      return allAssets[path].default;
+    }
+
+    const optimized = await getImage({
+      src: allAssets[path].default,
+      width: 1200,
+      format: "webp",
+    });
+    return optimized.src;
+  }),
+);
+
+const mainVideoPath = data.video
+  ? allAssets[resolveAssetPath(data.video)]?.default
+  : null;
+
+const isLCP = index < 2;
+---
+
+<article
+  class="project-card scroll-stat group flex flex-col h-fit w-full cursor-pointer rounded-[1.5rem] border border-white/10 bg-[#161616] transition-all duration-500 hover:border-accent hover:bg-[#1c1c1c] overflow-hidden"
+  data-category={data.category.join(",")}
+  data-project={JSON.stringify({
+    title: data.title,
+    category: data.category.join(" + "),
+    tech: data.tech,
+    images: optimizedCarousel,
+  })}
+>
+  <div class="hidden-markdown-content hidden">
+    <Content />
+  </div>
+
+  <div class="relative w-full aspect-[16/11] overflow-hidden">
+    <div
+      class="absolute inset-0 z-40 flex items-center justify-center opacity-0 transition-all duration-300 group-hover:opacity-100"
+    >
+      <div
+        class="translate-y-4 rounded-full border border-accent bg-accent/10 px-6 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-accent backdrop-blur-md shadow-[0_0_20px_rgba(var(--color-accent),0.3)]"
+      >
+        View Project Details
+      </div>
+    </div>
+
+    <div class="h-full w-full">
+      {
+        allAssets[thumbPath] && (
+          <Image
+            src={allAssets[thumbPath].default}
+            alt={data.title}
+            width={800}
+            height={500}
+            loading={isLCP ? "eager" : "lazy"}
+            fetchpriority={isLCP ? "high" : "auto"}
+            decoding={isLCP ? "sync" : "async"}
+            class="h-full w-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-50"
+          />
+        )
+      }
+      {
+        mainVideoPath && (
+          <video
+            src={mainVideoPath}
+            muted
+            loop
+            playsinline
+            preload="none"
+            class="video-preview absolute inset-0 h-full w-full object-cover opacity-100 transition-all duration-700 group-hover:brightness-50"
+          />
+        )
+      }
+    </div>
+
+    <div
+      class="absolute inset-x-0 bottom-0 z-20 h-24 bg-gradient-to-t from-[#161616] via-[#161616]/60 to-transparent"
+    >
+    </div>
+  </div>
+
+  <div class="relative z-30 flex flex-col px-8 pb-8 -mt-2">
+    <header class="flex items-start justify-between">
+      <div>
+        <h3
+          class="text-2xl font-bold tracking-tight text-white font-heading transition-colors group-hover:text-accent"
+        >
+          {data.title}
+        </h3>
+      </div>
+      <Icon
+        name="ph:arrow-up-right"
+        class="h-5 w-5 text-slate-light transition-all group-hover:text-accent"
+      />
+    </header>
+
+    <p class="mt-4 text-[12px] leading-relaxed text-slate-light/80 text-justify hyphens-auto">
+      {data.summary}
+    </p>
+
+    <div class="mt-4 flex flex-wrap gap-2">
+      {
+        data.tech.map((item: string) => (
+          <span class="rounded-lg border border-white/5 bg-white/5 px-2 py-1 text-[10px] font-medium text-slate-light">
+            {item}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+</article>
+
+<script>
+  function initCardClicks() {
+    const cards = document.querySelectorAll(".project-card");
+
+    cards.forEach((card) => {
+      card.removeEventListener("click", handleCardClick);
+      card.addEventListener("click", handleCardClick);
+    });
+  }
+
+  function handleCardClick(event : any) {
+    const card = event.currentTarget;
+    const rawData = card.getAttribute("data-project");
+    const markdownHtml = card.querySelector(
+      ".hidden-markdown-content",
+    )?.innerHTML;
+
+    if (rawData && markdownHtml) {
+      const data = JSON.parse(rawData);
+      window.dispatchEvent(
+        new CustomEvent("open-project", {
+          detail: { ...data, content: markdownHtml },
+        }),
+      );
+    }
+  }
+
+  initCardClicks();
+  document.addEventListener("astro:page-load", initCardClicks);
+</script>
+
+<style>
+  .project-card.hidden {
+    display: none;
+  }
+  .scroll-stat {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s cubic-bezier(0.2, 1, 0.2, 1);
+  }
+  .scroll-stat.reveal {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>

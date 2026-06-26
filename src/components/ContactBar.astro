@@ -1,0 +1,51 @@
+---
+import { site } from '@data/site';
+import { Icon } from 'astro-icon/components';
+---
+
+<div class="flex flex-wrap items-center justify-center gap-3 md:gap-4">
+  
+  <a
+    href={site.contact.github}
+    class="group flex items-center gap-2 text-slate-light transition-all hover:text-accent"
+    target="_blank"
+    rel="noreferrer"
+    aria-label="GitHub"
+  >
+    <Icon name="ph:github-logo" class="h-7 w-7 transition-transform group-hover:scale-110" />
+    <span class="text-[11px] tracking-[0.2em]">GitHub</span>
+  </a>
+
+  <a
+    href={site.contact.linkedin}
+    class="group flex items-center gap-2 text-slate-light transition-all hover:text-accent"
+    target="_blank"
+    rel="noreferrer"
+    aria-label="LinkedIn"
+  >
+    <Icon name="ph:linkedin-logo" class="h-7 w-7 transition-transform group-hover:scale-110" />
+    <span class="text-[11px] tracking-[0.2em]">LinkedIn</span>
+  </a>
+
+  <a
+    href={site.contact.artstation}
+    class="group flex items-center gap-2 text-slate-light transition-all hover:text-accent"
+    target="_blank"
+    rel="noreferrer"
+    aria-label="ArtStation"
+  >
+    <Icon name="simple-icons:artstation" class="h-5 w-5 transition-transform group-hover:scale-110" />
+    <span class="text-[11px] tracking-[0.2em]">ArtStation</span>
+  </a>
+
+  <a
+    href={site.contact.itch}
+    class="group flex items-center gap-2 text-slate-light transition-all hover:text-accent"
+    target="_blank"
+    rel="noreferrer"
+    aria-label="Itch.io"
+  >
+    <Icon name="simple-icons:itchdotio" class="h-5 w-5 transition-transform group-hover:scale-110" />
+    <span class="text-[11px] tracking-[0.2em]">Itch.io</span>
+  </a>
+</div>

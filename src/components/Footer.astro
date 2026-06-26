@@ -1,0 +1,33 @@
+---
+import { site } from "@data/site";
+const year = new Date().getFullYear();
+---
+
+<footer class="pb-12">
+  <div class="relative mb-8 h-px w-full bg-white/10">
+    <div
+      class="absolute -top-1 left-0 h-2 w-2 rounded-full bg-accent shadow-[0_0_10px_rgba(var(--color-accent),0.5)]"
+    >
+    </div>
+  </div>
+
+  <div
+    class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between font-mono text-[10px] uppercase tracking-[0.2em] text-slate-light/50"
+  >
+    <p>
+      &copy; {year}
+      {site.hero.name}.
+    </p>
+
+    <p class="md:text-right">
+      Built with <a
+        href="https://astro.build"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="font-bold text-accent"
+      >
+        Astro
+      </a> &middot;
+    </p>
+  </div>
+</footer>

@@ -1,0 +1,229 @@
+---
+import { Image } from "astro:assets";
+import { Icon } from "astro-icon/components";
+import placeholder from "../assets/placeholder.svg";
+---
+
+<div
+  id="project-modal"
+  class="fixed inset-0 z-[10000] hidden items-center justify-center p-4 md:p-8"
+  role="dialog"
+>
+  <div id="modal-backdrop" class="fixed inset-0 bg-black/95 backdrop-blur-xl">
+  </div>
+
+  <div
+    class="relative z-[10001] flex h-full max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#0a0a0a] shadow-2xl"
+  >
+    <button
+      id="close-modal"
+      class="absolute right-6 top-6 z-[10002] rounded-full bg-black/50 p-4 text-white backdrop-blur-md transition-all hover:bg-accent hover:text-black"
+    >
+      <Icon name="ph:x" class="h-6 w-6" />
+    </button>
+
+    <div class="flex-1 overflow-y-auto">
+      <div
+        class="relative flex w-full items-center justify-center bg-[#050505] border-b border-white/5 h-[300px] sm:h-[350px] md:h-[450px]"
+      >
+        <Image
+          id="modal-image"
+          src={placeholder}
+          alt="Project Showcase"
+          width={1200}
+          height={800}
+          class="h-full w-full object-contain opacity-0 transition-opacity duration-300"
+        />
+        <video
+          id="modal-video"
+          controls
+          autoplay
+          muted
+          loop
+          class="hidden h-full w-full object-contain"></video>
+
+        <div
+          id="carousel-controls"
+          class="absolute inset-0 flex items-center justify-between px-4 pointer-events-none"
+        >
+          <button
+            id="prev-img"
+            class="pointer-events-auto rounded-full bg-black/40 p-4 text-white hover:bg-accent transition-all"
+          >
+            <Icon name="ph:caret-left" class="h-6 w-6" />
+          </button>
+          <button
+            id="next-img"
+            class="pointer-events-auto rounded-full bg-black/40 p-4 text-white hover:bg-accent transition-all"
+          >
+            <Icon name="ph:caret-right" class="h-6 w-6" />
+          </button>
+        </div>
+
+        <div
+          id="image-counter"
+          class="absolute bottom-4 right-6 rounded-md bg-black/60 px-3 py-1.5 font-mono text-[10px] text-white/70"
+        >
+        </div>
+      </div>
+
+      <div class="p-8 pt-4 md:p-16 md:pt-4">
+        <div class="border-b border-white/5">
+          <h2
+            id="modal-title"
+            class="font-heading text-3xl font-bold text-white md:text-4xl"
+          >
+          </h2>
+          <div id="modal-tech" class="mt-4 flex flex-wrap gap-3"></div>
+        </div>
+        <div
+          id="modal-body"
+          class="body-copy prose prose-invert prose-accent max-w-none prose-headings:font-heading prose-headings:text-white prose-h2:text-accent prose-p:text-base prose-p:leading-relaxed prose-p:text-slate-light prose-li:text-slate-light/90 prose-strong:text-accent prose-code:text-accent prose-img:rounded-xl prose-a:text-accent prose-a:no-underline hover:prose-a:underline"
+        >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    interface ModalState {
+      images: string[];
+      index: number;
+      initialized: boolean;
+    }
+
+    declare global {
+      interface Window {
+        modalData: ModalState;
+        goatcounter: any;
+      }
+    }
+
+    window.modalData = window.modalData || {
+      images: [],
+      index: 0,
+      initialized: false,
+    };
+
+    const updateMedia = () => {
+      const modalImg = document.getElementById(
+        "modal-image",
+      ) as HTMLImageElement;
+      const modalVid = document.getElementById(
+        "modal-video",
+      ) as HTMLVideoElement;
+      const counter = document.getElementById("image-counter");
+      const controls = document.getElementById("carousel-controls");
+
+      if (!modalImg || !modalVid || window.modalData.images.length === 0)
+        return;
+
+      const currentSrc = window.modalData.images[window.modalData.index];
+      const isVideo = currentSrc.toLowerCase().endsWith(".mp4");
+
+      modalImg.classList.add("hidden");
+      modalVid.classList.add("hidden");
+      modalVid.pause();
+
+      if (isVideo) {
+        modalVid.classList.remove("hidden");
+        modalVid.src = currentSrc;
+        modalVid.play().catch(() => {});
+      } else {
+        modalImg.classList.remove("hidden");
+        modalImg.style.opacity = "0";
+        modalImg.removeAttribute("srcset");
+        modalImg.src = currentSrc;
+        modalImg.onload = () => {
+          modalImg.style.opacity = "1";
+        };
+      }
+
+      if (counter)
+        counter.textContent = `${window.modalData.index + 1} / ${window.modalData.images.length}`;
+      if (controls) {
+        if (window.modalData.images.length <= 1) {
+          controls.classList.add("hidden");
+          counter?.classList.add("hidden");
+        } else {
+          controls.classList.remove("hidden");
+          counter?.classList.remove("hidden");
+        }
+      }
+    };
+
+    const closeModal = () => {
+      const modal = document.getElementById("project-modal");
+      const modalVid = document.getElementById(
+        "modal-video",
+      ) as HTMLVideoElement;
+      modal?.classList.add("hidden");
+      modal?.classList.remove("flex");
+      if (modalVid) modalVid.pause();
+      document.body.style.overflow = "";
+    };
+
+    function setupModalSystem() {
+      if (window.modalData.initialized) return;
+
+      document.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest("#close-modal") || target.id === "modal-backdrop") {
+          closeModal();
+        }
+        if (target.closest("#next-img")) {
+          e.stopPropagation();
+          window.modalData.index =
+            (window.modalData.index + 1) % window.modalData.images.length;
+          updateMedia();
+        }
+        if (target.closest("#prev-img")) {
+          e.stopPropagation();
+          window.modalData.index =
+            (window.modalData.index - 1 + window.modalData.images.length) %
+            window.modalData.images.length;
+          updateMedia();
+        }
+      });
+
+      window.addEventListener("open-project", (e: any) => {
+        const modal = document.getElementById("project-modal");
+        const data = e.detail;
+
+        window.modalData.images = data.images || [];
+        window.modalData.index = 0;
+
+        document.getElementById("modal-title")!.textContent = data.title;
+        document.getElementById("modal-body")!.innerHTML = data.content;
+
+        const techEl = document.getElementById("modal-tech");
+        if (techEl) {
+          techEl.innerHTML = (data.tech || [])
+            .map(
+              (t: string) =>
+                `<span class="px-4 py-1.5 rounded-md border border-white/10 bg-white/5 text-[11px] font-mono uppercase text-slate-light">${t}</span>`,
+            )
+            .join("");
+        }
+
+        if (window.goatcounter && window.goatcounter.count) {
+          window.goatcounter.count({
+            path: `modal/${data.title.toLowerCase().replace(/\s+/g, "-")}`,
+            title: `Project Details: ${data.title}`,
+            event: true,
+          });
+        }
+
+        updateMedia();
+        modal?.classList.remove("hidden");
+        modal?.classList.add("flex");
+        document.body.style.overflow = "hidden";
+      });
+
+      window.modalData.initialized = true;
+    }
+
+    setupModalSystem();
+    document.addEventListener("astro:page-load", closeModal);
+  </script>
+</div>

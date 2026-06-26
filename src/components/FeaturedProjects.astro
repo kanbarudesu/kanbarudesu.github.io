@@ -1,0 +1,187 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import ProjectCard from "./ProjectCard.astro";
+import ProjectModal from "./ProjectModal.astro";
+
+const allProjects: CollectionEntry<"projects">[] =
+  await getCollection("projects");
+const projects = allProjects.sort((a, b) => a.data.order - b.data.order);
+
+const leftColumn = projects.filter((_, i) => i % 2 === 0);
+const rightColumn = projects.filter((_, i) => i % 2 !== 0);
+
+const DEFAULT_CATEGORY = "Featured";
+const categoryData = [
+  { id: "All", label: "All", description: "" },
+  {
+    id: "Featured",
+    label: "Featured",
+    description:
+      "A curated selection of my recent work and technical highlights.",
+  },
+  {
+    id: "Games",
+    label: "Games",
+    description: "Interactive experiences and gameplay systems.",
+  },
+  {
+    id: "Technical Prototype",
+    label: "Tools & Prototypes",
+    description:
+      "Technical projects exploring gameplay systems, mechanics recreation, and runtime/editor tooling system.",
+  },
+  { id: "VFX", label: "VFX", description: "VFX, Shaders and technical art." },
+];
+
+const initialDescription =
+  categoryData.find((c) => c.id === DEFAULT_CATEGORY)?.description || "";
+---
+
+<section
+  id="featured-projects"
+  class="mb-24 scroll-mt-24 lg:mb-14 lg:scroll-mt-8"
+>
+  <div class="mb-4">
+    <h2 class="text-3xl mb-3 font-bold tracking-tight text-accent font-heading">
+      Projects
+    </h2>
+  </div>
+
+  <div class="mb-6 flex flex-wrap items-center gap-4">
+    {
+      categoryData.map((cat) => (
+        <button
+          data-filter={cat.id}
+          data-description={cat.description}
+          class="filter-btn group relative flex items-center justify-center rounded-md border border-white/10 px-6 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-light transition-all hover:border-accent/50 hover:text-white data-[active=true]:border-accent data-[active=true]:text-accent data-[active=true]:bg-accent/5"
+          data-active={cat.id === DEFAULT_CATEGORY ? "true" : "false"}
+        >
+          {cat.label}
+        </button>
+      ))
+    }
+  </div>
+
+  <div
+    id="category-info"
+    class={`mb-6 max-w-2xl transition-all duration-500 ${initialDescription ? "opacity-100" : "opacity-0 hidden"}`}
+  >
+    <p
+      class="text-sm leading-relaxed text-slate-light border-l-2 border-accent/30 pl-4"
+    >
+      {initialDescription}
+    </p>
+  </div>
+
+  <div id="project-grid" class="flex flex-col md:flex-row gap-4 items-start">
+    <div class="flex flex-col gap-4 w-full md:w-1/2">
+      {
+        leftColumn.map((project) => (
+          <ProjectCard project={project} index={projects.indexOf(project)} />
+        ))
+      }
+    </div>
+    <div class="flex flex-col gap-4 w-full md:w-1/2">
+      {
+        rightColumn.map((project) => (
+          <ProjectCard project={project} index={projects.indexOf(project)} />
+        ))
+      }
+    </div>
+  </div>
+
+  <ProjectModal />
+</section>
+
+<script define:vars={{ DEFAULT_CATEGORY }}>
+  function initFeaturedSection() {
+    const cards = document.querySelectorAll(".project-card");
+    const buttons = document.querySelectorAll(".filter-btn");
+    const infoContainer = document.getElementById("category-info");
+    const infoText = infoContainer ? infoContainer.querySelector("p") : null;
+
+    let infoTimer = null;
+
+    const videoObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target.querySelector("video");
+          if (!video) return;
+          const isFilteredOut = entry.target.style.display === "none";
+          if (entry.isIntersecting && !isFilteredOut) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { threshold: 0.4 },
+    );
+
+    cards.forEach((card) => videoObserver.observe(card));
+
+    function applyFilter(filter, description) {
+      if (infoContainer && infoText) {
+        if (infoTimer) clearTimeout(infoTimer);
+
+        if (!description || description === "") {
+          infoContainer.classList.add("opacity-0", "hidden");
+        } else {
+          infoContainer.classList.remove("hidden");
+          infoText.textContent = description;
+          infoTimer = setTimeout(() => {
+            infoContainer.classList.remove("opacity-0");
+          }, 10);
+        }
+      }
+
+      cards.forEach((card) => {
+        const categoryAttr = card.getAttribute("data-category") || "";
+        const categories = categoryAttr.split(",");
+        const video = card.querySelector("video");
+
+        if (card.dataset.timerId) {
+          clearTimeout(parseInt(card.dataset.timerId));
+        }
+
+        if (filter === "All" || categories.includes(filter)) {
+          card.style.display = "block";
+          requestAnimationFrame(() => {
+            card.style.opacity = "1";
+            card.style.transform = "scale(1)";
+            card.classList.add("reveal");
+          });
+        } else {
+          card.style.opacity = "0";
+          card.style.transform = "scale(0.95)";
+          if (video) video.pause();
+
+          const tid = setTimeout(() => {
+            card.style.display = "none";
+          }, 300);
+          card.dataset.timerId = tid;
+        }
+      });
+    }
+
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const filter = btn.getAttribute("data-filter");
+        const description = btn.getAttribute("data-description");
+        buttons.forEach((b) => b.setAttribute("data-active", "false"));
+        btn.setAttribute("data-active", "true");
+        applyFilter(filter, description);
+      });
+    });
+
+    const activeBtn = document.querySelector('.filter-btn[data-active="true"]');
+    const initialDesc = activeBtn
+      ? activeBtn.getAttribute("data-description")
+      : "";
+    applyFilter(DEFAULT_CATEGORY, initialDesc);
+  }
+
+  initFeaturedSection();
+  document.addEventListener("astro:after-swap", initFeaturedSection);
+  document.addEventListener("astro:page-load", initFeaturedSection);
+</script>

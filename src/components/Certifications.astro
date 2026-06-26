@@ -1,0 +1,16 @@
+---
+import { site } from "@data/site";
+import CertificationCard from "./CertificationCard.astro";
+---
+
+<section id="certifications" class="mb-24 scroll-mt-24 lg:mb-12 lg:scroll-mt-8">
+  <div class="mb-4">
+    <h2 class="text-3xl font-bold tracking-tight text-accent font-heading">
+      Certifications
+    </h2>
+  </div>
+
+  <div class="mx-auto flex max-w-4xl flex-col gap-4">
+    {site.certifications.map((cert) => <CertificationCard cert={cert} />)}
+  </div>
+</section>

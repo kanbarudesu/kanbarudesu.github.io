@@ -1,0 +1,91 @@
+---
+import { Image } from "astro:assets";
+import { Icon } from "astro-icon/components";
+
+interface Props {
+    cert: {
+        title: string;
+        issuer: string;
+        date: string;
+        image: string;
+        credentialUrl?: string;
+    };
+}
+
+const { cert } = Astro.props;
+const images = import.meta.glob<{ default: ImageMetadata }>(
+    "/src/assets/certs/*.{jpeg,jpg,png,webp}",
+);
+const imagePath = `/src/assets/certs/${cert.image}`;
+
+if (!images[imagePath]) {
+    throw new Error(`"${imagePath}" does not exist in "src/assets/certs/".`);
+}
+---
+
+<article
+    class="scroll-stat group relative flex flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#161616] transition-all duration-500 hover:border-accent/40 hover:bg-[#1c1c1c]"
+>
+    <div class="relative p-4 md:p-6">
+        <div
+            class="relative overflow-hidden rounded-xl border border-white/5 bg-navy-lighter shadow-2xl"
+        >
+            <Image
+                src={images[imagePath]()}
+                alt={cert.title}
+                width={1200}
+                height={800}
+                class="h-auto w-full object-contain transition-transform duration-700 group-hover:scale-[1.02]"
+            />
+
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+            >
+            </div>
+        </div>
+    </div>
+
+    <div
+        class="flex flex-col px-8 pb-8 pt-2 md:flex-row md:items-end md:justify-between"
+    >
+        <div class="space-y-1">
+            <span
+                class="font-mono text-xs uppercase tracking-[0.2em] text-accent"
+                >{cert.issuer}</span
+            >
+            <h3 class="font-heading text-2xl font-bold text-white md:text-2xl">
+                {cert.title}
+            </h3>
+            <p class="text-sm text-slate-light">{cert.date}</p>
+        </div>
+
+        {
+            cert.credentialUrl && (
+                <div class="mt-6 md:mt-0">
+                    <a
+                        href={cert.credentialUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 font-mono text-[11px] font-bold uppercase tracking-widest text-white transition-all hover:border-accent hover:bg-accent/10 hover:text-accent hover:shadow-[0_0_20px_rgba(var(--color-accent),0.2)]"
+                    >
+                        View Credential
+                        <Icon name="ph:arrow-up-right" class="h-4 w-4" />
+                    </a>
+                </div>
+            )
+        }
+    </div>
+</article>
+
+<style>
+    .scroll-stat {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .scroll-stat.reveal {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>
