@@ -5,7 +5,6 @@ export interface TechCategory {
 
 export interface SiteConfig {
   url: string;
-  goatCounterCode: string;
   meta: { title: string; description: string ; ogImage: string };
   hero: any;
   about: any;
@@ -30,7 +29,6 @@ export interface Certification {
 
 export const site: SiteConfig = {
   url: 'https://kanbarudesu.github.io',
-  goatCounterCode: 'kanbarudesu',
   meta: {
     title: 'Yogie Sukandi Wijaya | Game Programmer',
     description: 'Game Programmer specializing in Unity C# and editor tool development. Explore the games, prototypes, and Unity editor tools I have created.',
